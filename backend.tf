@@ -1,6 +1,6 @@
 terraform {
   backend "s3" {
-    bucket = ""
+    bucket = "tuna-gitops-tfstate"
     key    = "eks/terraform.tfstate"
     region = "us-east-1"
   }
