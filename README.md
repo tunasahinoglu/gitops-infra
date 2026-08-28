@@ -80,6 +80,12 @@ kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/st
 kubectl apply -f argocd-ingress.yaml
 ```
 
+Initial admin password:
+
+```bash
+kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
+```
+
 **SonarQube.** Runs in-cluster rather than on a separate EC2 instance:
 
 ```bash
@@ -98,16 +104,18 @@ through an ALB.
 
 ## Cleanup
 
-Delete the Ingresses before running `terraform destroy`. Their ALBs aren't
-tracked by Terraform, so destroying the VPC first can leave them orphaned:
+Delete the ArgoCD Application first. It manages the app's Ingress directly,
+so deleting the Ingress alone gets it recreated:
 
 ```bash
-kubectl delete ingress accounts-ingress -n accounts
+kubectl delete application accounts -n argocd
 kubectl delete ingress argocd-ingress -n argocd
+kubectl delete ingress -n sonarqube --all
 ```
 
-Then:
+Confirm all ALBs are gone, then destroy the infrastructure:
 
 ```bash
+aws elbv2 describe-load-balancers --query "LoadBalancers[].LoadBalancerName"
 terraform destroy
 ```
